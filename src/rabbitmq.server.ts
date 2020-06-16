@@ -38,8 +38,8 @@ export class RabbitmqServer {
   async produce(
     queue: string,
     content: Buffer,
-    durable = false,
-    persistent = false,
+    durable = true,
+    persistent = true,
   ) {
     //Cria uma Queue Caso não exista
     await this.channel.assertQueue(queue, {durable});
@@ -57,7 +57,7 @@ export class RabbitmqServer {
   async consume(
     queue: string,
     count: number | undefined,
-    durable = false,
+    durable = true,
     isNoAck = false,
   ) {
     await this.channel.assertQueue(queue, {durable});
