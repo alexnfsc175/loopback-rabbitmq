@@ -39,20 +39,20 @@
     "!*/__tests__"
   ],
   "dependencies": {
-    "@loopback/boot": "^2.3.2",
-    "@loopback/context": "^3.8.2",
-    "@loopback/core": "^2.7.1",
+    "@loopback/boot": "^2.3.3",
+    "@loopback/context": "^3.9.0",
+    "@loopback/core": "^2.8.0",
     "amqplib": "^0.5.6",
     "tslib": "^2.0.0"
   },
   "devDependencies": {
-    "@loopback/build": "^5.4.2",
-    "@loopback/eslint-config": "^8.0.0",
-    "@loopback/testlab": "^3.1.6",
+    "@loopback/build": "^5.4.3",
+    "@loopback/eslint-config": "^8.0.1",
+    "@loopback/testlab": "^3.1.7",
     "@types/amqplib": "^0.5.13",
-    "@types/node": "^10.17.24",
-    "eslint": "^7.1.0",
+    "@types/node": "^10.17.26",
+    "eslint": "^7.2.0",
     "source-map-support": "^0.5.19",
-    "typescript": "~3.9.3"
+    "typescript": "~3.9.5"
   }
 }

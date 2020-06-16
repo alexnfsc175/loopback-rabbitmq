@@ -7,7 +7,7 @@ import {
   CoreBindings,
   createBindingFromClass,
   inject,
-  ProviderMap,
+  ProviderMap
 } from '@loopback/core';
 import debugFactory from 'debug';
 import {RabbitmqBindings} from './keys';

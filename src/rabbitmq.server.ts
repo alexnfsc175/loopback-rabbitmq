@@ -51,14 +51,14 @@ export class RabbitmqServer {
    *
    * @param {String} queue Name of queue
    * @param {Number} count Number of messages to be consumed at a time
-   * @param {boolean} isNoAck Manual consumer acknowledgments
    * @param {boolean} durable Message durability
+   * @param {boolean} isNoAck Manual consumer acknowledgments
    */
   async consume(
     queue: string,
-    count: number | undefined = undefined,
-    isNoAck = false,
+    count: number | undefined,
     durable = false,
+    isNoAck = false,
   ) {
     await this.channel.assertQueue(queue, {durable});
     if (count) {
@@ -73,7 +73,7 @@ export class RabbitmqServer {
         queue,
         message => {
           if (message !== null) {
-            consumeEmitter.emit('data', message.content.toString(), () =>
+            consumeEmitter.emit('data', message.content, () =>
               this.channel.ack(message),
             );
           } else {
@@ -113,7 +113,7 @@ export class RabbitmqServer {
         queue.queue,
         message => {
           if (message !== null) {
-            consumeEmitter.emit('data', message.content.toString());
+            consumeEmitter.emit('data', message.content);
           } else {
             const error = new Error('NullMessageException');
             consumeEmitter.emit('error', error);
