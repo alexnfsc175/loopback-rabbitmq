@@ -1,17 +1,25 @@
 import {BindingAddress, BindingKey} from '@loopback/core';
 import {RabbitmqComponentConfig} from './interfaces';
 import {RabbitmqComponent} from './rabbitmq.component';
-import {RabbitmqServer} from './rabbitmq.server';
+import {RabbitmqConsumer} from './rabbitmq.consumer';
+import {RabbitmqProducer} from './rabbitmq.producer';
 
 /**
  * Binding keys used by this component.
  */
 export namespace RabbitmqBindings {
   /**
-   * Binding key for `RabbitmqServer`
+   * Binding key for `RabbitmqProducer`
    */
-  export const RABBITMQ_SERVER = BindingKey.create<RabbitmqServer>(
-    'components.RabbitmqServer',
+  export const RABBITMQ_PRODUCER = BindingKey.create<RabbitmqProducer>(
+    'components.RabbitmqProducer',
+  );
+
+  /**
+   * Binding key for `RabbitmqConsumer`
+   */
+  export const RABBITMQ_CONSUMER = BindingKey.create<RabbitmqConsumer>(
+    'components.RabbitmqConsumer',
   );
   /**
    * Binding key for `RabbitmqComponent`
