@@ -1,18 +1,15 @@
 import {
-  Application,
   bind,
   Binding,
   Component,
   ContextTags,
-  CoreBindings,
   createBindingFromClass,
-  inject,
-  ProviderMap
+  ProviderMap,
 } from '@loopback/core';
 import debugFactory from 'debug';
 import {RabbitmqBindings} from './keys';
-import {RabbitmqObserver} from './observers';
-import {RabbitmqServer} from './rabbitmq.server';
+import {RabbitmqConsumer} from './rabbitmq.consumer';
+import {RabbitmqProducer} from './rabbitmq.producer';
 const debug = debugFactory('loopback:rabbitmq:component');
 
 @bind({
@@ -23,17 +20,16 @@ const debug = debugFactory('loopback:rabbitmq:component');
 export class RabbitmqComponent implements Component {
   providers?: ProviderMap = {};
   bindings?: Binding[];
-  constructor(
-    @inject(CoreBindings.APPLICATION_INSTANCE)
-    private application: Application,
-  ) {
+  constructor() {
     debug('RabbitmqComponent::init');
     this.bindings = [
-      createBindingFromClass(RabbitmqServer, {
-        key: RabbitmqBindings.RABBITMQ_SERVER,
+      createBindingFromClass(RabbitmqProducer, {
+        key: RabbitmqBindings.RABBITMQ_PRODUCER,
+      }),
+
+      createBindingFromClass(RabbitmqConsumer, {
+        key: RabbitmqBindings.RABBITMQ_CONSUMER,
       }),
     ];
-
-    this.application.lifeCycleObserver(RabbitmqObserver);
   }
 }
