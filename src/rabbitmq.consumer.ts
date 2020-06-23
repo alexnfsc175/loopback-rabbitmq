@@ -5,7 +5,7 @@ import {EventEmitter} from 'events';
 import {
   ConfigDefaults,
   RabbitmqBindings,
-  RabbitmqComponentConfig,
+  RabbitmqComponentConfig
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:consumer');
@@ -31,7 +31,7 @@ export class RabbitmqConsumer {
     this.interval = interval;
   }
 
-  private async getConnection(): Promise<Connection> {
+  async getConnection(): Promise<Connection> {
     if (this.connection) {
       return this.connection;
     }
@@ -109,7 +109,7 @@ export class RabbitmqConsumer {
     promise.then(onResolve, onReject);
   }
 
-  private async getChannel(): Promise<Channel> {
+  async getChannel(): Promise<Channel> {
     const connection = await this.getConnection();
     if (!this.channel) {
       this.channel = await connection.createChannel();
