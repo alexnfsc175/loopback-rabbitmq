@@ -11,7 +11,7 @@ import {
 const debug = debugFactory('loopback:rabbitmq:consumer');
 
 @bind({scope: BindingScope.SINGLETON})
-export class RabbitmqConsumer {
+export class RabbitmqConsumer extends EventEmitter {
   private connection: Connection | undefined;
   private channel: Channel | undefined;
   private timeoutId: NodeJS.Timeout;
@@ -23,6 +23,7 @@ export class RabbitmqConsumer {
     @config({fromBinding: RabbitmqBindings.COMPONENT})
     private componentConfig: RabbitmqComponentConfig,
   ) {
+    super();
     this.componentConfig = {...ConfigDefaults, ...this.componentConfig};
     debug('criou uma instancia RabbitmqServer');
     const {retries, interval} = this.componentConfig.consumer;
@@ -89,11 +90,13 @@ export class RabbitmqConsumer {
                 this.getChannel().then(
                   () => {
                     debug('timeout::channel created');
+                    this.emit('re-established-connection');
                     resolve();
                   },
                   () => {},
                 );
               } else {
+                this.emit('re-established-connection');
                 resolve();
               }
             },
@@ -140,7 +143,7 @@ export class RabbitmqConsumer {
    */
   async consume(
     queue: string,
-    count: number | undefined,
+    count = 1,
     durable = true,
     isNoAck = false,
   ) {
@@ -158,8 +161,11 @@ export class RabbitmqConsumer {
         queue,
         message => {
           if (message !== null) {
-            consumeEmitter.emit('data', message.content, () =>
-              channel.ack(message),
+            consumeEmitter.emit(
+              'data',
+              message.content,
+              () => channel.ack(message),
+              () => channel.reject(message, true),
             );
           } else {
             const error = new Error('NullMessageException');
