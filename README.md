@@ -65,7 +65,8 @@ export class RabbitController {
     responses: {
       '200': TEST_RESPONSE,
     },
-  }){
+  })
+  async test() {
     const emailMsg = {
       to: 'destinatario@teste.com',
       body: '(Email)',
@@ -76,6 +77,25 @@ export class RabbitController {
       body: '(Log)',
     };
 
+    this.rabbitmqConsumer.on('re-established-connection', async () => {
+      await this.initConsumers();
+    });
+
+    await this.initConsumers();
+
+    await this.rabbitmqProducer.produce(
+      'log',
+      Buffer.from(JSON.stringify(logMsg))
+    );
+
+    await this.rabbitmqProducer.produce(
+      'email',
+      Buffer.from(JSON.stringify(emailMsg))
+    );
+
+  }
+
+  private async initConsumers() {
     /**
      *  How many messages the consumer will pick up at a time.
      *  Without it, itwill take all
@@ -106,16 +126,6 @@ export class RabbitController {
       console.log('channel::email', hydratedMessage)
       ack();
     });
-
-    await this.rabbitmqProducer.produce(
-      'log',
-      Buffer.from(JSON.stringify(logMsg))
-    );
-
-    await this.rabbitmqProducer.produce(
-      'email',
-      Buffer.from(JSON.stringify(emailMsg))
-    );
   }
 }
 ```
