@@ -4,10 +4,19 @@ import debugFactory from 'debug';
 import {
   ConfigDefaults,
   RabbitmqBindings,
-  RabbitmqComponentConfig,
+  RabbitmqComponentConfig
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:producer');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const jsonReplacer = (key: string, value: any) =>
+  typeof value === 'undefined' ? null : value;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const isObject = (obj: any) => {
+  const type = typeof obj;
+  return type === 'function' || (type === 'object' && !!obj);
+};
 
 @bind({scope: BindingScope.SINGLETON})
 export class RabbitmqProducer {
@@ -111,24 +120,43 @@ export class RabbitmqProducer {
     promise.then(onResolve, onReject);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  parseToBuffer(content: any) {
+    if (Buffer.isBuffer(content)) {
+      return content;
+    } else {
+      if (isObject(content)) {
+        return Buffer.from(JSON.stringify(content/*, jsonReplacer */));
+      }
+    }
+    throw new Error('the content must be an object or buffer');
+  }
+
   async produce(
     queue: string,
-    content: Buffer,
+    content: Buffer | object,
     durable = true,
     persistent = true,
   ) {
+    const parsedContent = this.parseToBuffer(content);
     const channel = await this.getChannel();
     //Cria uma Queue Caso não exista
     await channel.assertQueue(queue, {durable});
 
-    channel.sendToQueue(queue, content, {persistent});
+    channel.sendToQueue(queue, parsedContent, {persistent});
   }
 
-  async publish(exchangeName: string, exchangeType: string, content: Buffer) {
+  async publish(
+    exchangeName: string,
+    exchangeType: string,
+    content: Buffer | object,
+  ) {
     const channel = await this.getChannel();
     await channel.assertExchange(exchangeName, exchangeType, {
       durable: false,
     });
-    channel.publish(exchangeName, '', content);
+
+    const parsedContent = this.parseToBuffer(content);
+    channel.publish(exchangeName, '', parsedContent);
   }
 }

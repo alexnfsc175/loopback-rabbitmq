@@ -5,7 +5,7 @@ import {EventEmitter} from 'events';
 import {
   ConfigDefaults,
   RabbitmqBindings,
-  RabbitmqComponentConfig
+  RabbitmqComponentConfig,
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:consumer');
@@ -141,12 +141,7 @@ export class RabbitmqConsumer extends EventEmitter {
    * @param {boolean} durable Message durability
    * @param {boolean} isNoAck Manual consumer acknowledgments
    */
-  async consume(
-    queue: string,
-    count = 1,
-    durable = true,
-    isNoAck = false,
-  ) {
+  async consume(queue: string, count = 1, durable = true, isNoAck = false) {
     const channel = await this.getChannel();
     await channel.assertQueue(queue, {durable});
     if (count) {
