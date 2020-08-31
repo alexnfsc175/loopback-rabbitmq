@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {bind, BindingScope, config} from '@loopback/core';
 import amqp, {Channel, Connection} from 'amqplib';
 import debugFactory from 'debug';
@@ -8,11 +9,10 @@ import {
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:producer');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export const jsonReplacer = (key: string, value: any) =>
   typeof value === 'undefined' ? null : value;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isObject = (obj: any) => {
   const type = typeof obj;
   return type === 'function' || (type === 'object' && !!obj);
@@ -120,43 +120,43 @@ export class RabbitmqProducer {
     promise.then(onResolve, onReject);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  parseToBuffer(content: any) {
-    if (Buffer.isBuffer(content)) {
-      return content;
+  parseToBuffer(message: any) {
+    let buffer: Buffer;
+    if (message instanceof Buffer) {
+      buffer = message;
+    } else if (message instanceof Uint8Array) {
+      buffer = Buffer.from(message);
+    } else if (message != null) {
+      buffer = Buffer.from(JSON.stringify(message/*, jsonReplacer */));
     } else {
-      if (isObject(content)) {
-        return Buffer.from(JSON.stringify(content/*, jsonReplacer */));
-      }
+      buffer = Buffer.alloc(0);
     }
-    throw new Error('the content must be an object or buffer');
+    return buffer;
   }
 
   async produce(
     queue: string,
-    content: Buffer | object,
+    content: any,
     durable = true,
     persistent = true,
   ) {
-    const parsedContent = this.parseToBuffer(content);
+    const buffer = this.parseToBuffer(content);
     const channel = await this.getChannel();
     //Cria uma Queue Caso não exista
     await channel.assertQueue(queue, {durable});
 
-    channel.sendToQueue(queue, parsedContent, {persistent});
+    channel.sendToQueue(queue, buffer, {persistent});
   }
 
-  async publish(
-    exchangeName: string,
-    exchangeType: string,
-    content: Buffer | object,
+  public async publish(
+    exchange: string,
+    routingKey: string,
+    message: any,
+    options?: amqp.Options.Publish,
   ) {
     const channel = await this.getChannel();
-    await channel.assertExchange(exchangeName, exchangeType, {
-      durable: false,
-    });
+    const buffer = this.parseToBuffer(message);
 
-    const parsedContent = this.parseToBuffer(content);
-    channel.publish(exchangeName, '', parsedContent);
+    channel.publish(exchange, routingKey, buffer, options);
   }
 }
