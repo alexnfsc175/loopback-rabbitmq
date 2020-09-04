@@ -1,11 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {bind, BindingScope, config} from '@loopback/core';
 import amqp, {Channel, Connection} from 'amqplib';
 import debugFactory from 'debug';
 import {EventEmitter} from 'events';
 import {
   ConfigDefaults,
+  getHandlerErrorBehavior,
+  MessageHandlerOptions,
+  Nack,
   RabbitmqBindings,
   RabbitmqComponentConfig,
+  SubscribeResponse
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:consumer');
@@ -21,7 +26,7 @@ export class RabbitmqConsumer extends EventEmitter {
 
   constructor(
     @config({fromBinding: RabbitmqBindings.COMPONENT})
-    private componentConfig: RabbitmqComponentConfig,
+    private componentConfig: Required<RabbitmqComponentConfig>,
   ) {
     super();
     this.componentConfig = {...ConfigDefaults, ...this.componentConfig};
@@ -42,21 +47,12 @@ export class RabbitmqConsumer extends EventEmitter {
 
     if (this.retries === 0 || this.retries > this.retry + 1) {
       const restart = (err: Error) => {
-        debug('Connection error occurred.');
+        debug('Connection error occurred.', err);
         if (this.connection) {
           this.connection.removeListener('error', restart);
           this.connection = undefined;
           this.channel = undefined;
         }
-
-        // if (this.channel) {
-        //   this.channel.close().then(() => {
-        //     debug('YES::channel closed.');
-        //     this.channel = undefined;
-        //   }, () => {});
-        // }{
-        //   debug('NOT::channel closed.', !!this.channel);
-        // }
 
         this.timeout(this.interval);
       };
@@ -117,101 +113,149 @@ export class RabbitmqConsumer extends EventEmitter {
     if (!this.channel) {
       this.channel = await connection.createChannel();
       debug('getChannel::channel created');
+      await this.setupInitChannel(this.channel);
+      debug('getChannel::setupInitChannel called');
     }
     return this.channel;
   }
 
-  async produce(
-    queue: string,
-    content: Buffer,
-    durable = true,
-    persistent = true,
-  ) {
-    const channel = await this.getChannel();
-    //Cria uma Queue Caso não exista
-    await channel.assertQueue(queue, {durable});
-
-    channel.sendToQueue(queue, content, {persistent});
-  }
-
-  /**
-   *
-   * @param {String} queue Name of queue
-   * @param {Number} count Number of messages to be consumed at a time
-   * @param {boolean} durable Message durability
-   * @param {boolean} isNoAck Manual consumer acknowledgments
-   */
-  async consume(queue: string, count = 1, durable = true, isNoAck = false) {
-    const channel = await this.getChannel();
-    await channel.assertQueue(queue, {durable});
-    if (count) {
-      // Quantas mensagens o consumidor irá pegar por vez.  Sem isso, ele irá pegar todas
-      await channel.prefetch(count);
+  private async setupInitChannel(channel: Channel): Promise<void> {
+    for (const exchange of this.componentConfig.exchanges) {
+      await channel.assertExchange(
+        exchange.name,
+        exchange.type ?? this.componentConfig.defaultExchangeType,
+        exchange.options,
+      );
     }
 
-    const consumeEmitter = new EventEmitter();
-    // const message = await this.channel.consume(queue);
-    try {
-      await channel.consume(
-        queue,
-        message => {
-          if (message !== null) {
-            consumeEmitter.emit(
-              'data',
-              message.content,
-              () => channel.ack(message),
-              () => channel.reject(message, true),
+    await channel.prefetch(this.componentConfig.prefetchCount);
+  }
+
+  async setupSubscriberChannel<T>(
+    handler: (
+      msg: T | undefined,
+      rawMessage?: amqp.ConsumeMessage,
+    ) => Promise<SubscribeResponse>,
+    msgOptions: MessageHandlerOptions,
+  ): Promise<void> {
+    const channel = await this.getChannel();
+
+    const {exchange, routingKey, allowNonJsonMessages} = msgOptions;
+
+    const {queue} = await channel.assertQueue(
+      msgOptions.queue ?? '',
+      msgOptions.queueOptions,
+    );
+
+    const routingKeys = Array.isArray(routingKey) ? routingKey : [routingKey];
+
+    await Promise.all(
+      routingKeys.map(route => {
+        debug('bindQueue: ', `${queue} => ${exchange} => ${route}`)
+        return channel.bindQueue(queue, exchange, route)
+      }),
+    );
+
+    await channel.consume(queue, async message => {
+      try {
+        if (message == null) {
+          throw new Error('Received null message');
+        }
+
+        const response = await this.handleMessage(
+          handler,
+          message,
+          allowNonJsonMessages,
+        );
+
+        if (response instanceof Nack) {
+          channel.nack(message, false, response.requeue);
+          return;
+        }
+
+        if (response) {
+          throw new Error(
+            'Received response from consumer handler. Consumer handlers should only return void',
+          );
+        }
+
+        channel.ack(message);
+      } catch (error) {
+        console.log('error: ', error);
+        if (message === null) {
+          return;
+        } else {
+          const errorHandler =
+            msgOptions.errorHandler ??
+            getHandlerErrorBehavior(
+              this.componentConfig.defaultConsumerErrorBehavior,
             );
-          } else {
-            const error = new Error('NullMessageException');
-            consumeEmitter.emit('error', error);
-          }
-        },
-        {noAck: isNoAck},
-      );
-    } catch (error) {
-      consumeEmitter.emit('error', error);
-    }
-    return consumeEmitter;
-  }
-
-  async publish(exchangeName: string, exchangeType: string, content: Buffer) {
-    const channel = await this.getChannel();
-    await channel.assertExchange(exchangeName, exchangeType, {
-      durable: false,
+          await errorHandler(channel, message, error);
+        }
+      }
     });
-    channel.publish(exchangeName, '', content);
+    debug('registered:consumer: ', queue);
   }
 
-  async subscribe(exchangeName: string, exchangeType: string) {
-    //TODO: Verificar se devo Criar uma conexão e um canal sempre???
-    // const connect = await amqp.connect(this.componentConfig.rabbitmqOptions);
-    // const channel = await connect.createChannel();
-
-    const channel = await this.getChannel();
-    await channel.assertExchange(exchangeName, exchangeType, {
-      durable: false,
-    });
-    const queue = await channel.assertQueue('', {exclusive: true});
-    await channel.bindQueue(queue.queue, exchangeName, '');
-    const consumeEmitter = new EventEmitter();
-
-    try {
-      await channel.consume(
-        queue.queue,
-        message => {
-          if (message !== null) {
-            consumeEmitter.emit('data', message.content);
-          } else {
-            const error = new Error('NullMessageException');
-            consumeEmitter.emit('error', error);
-          }
-        },
-        {noAck: true},
-      );
-    } catch (error) {
-      consumeEmitter.emit('error', error);
+  private handleMessage<T, U>(
+    handler: (
+      msg: T | undefined,
+      rawMessage?: amqp.ConsumeMessage,
+    ) => Promise<U>,
+    msg: amqp.ConsumeMessage,
+    allowNonJsonMessages?: boolean,
+  ) {
+    let message: T | undefined = undefined;
+    if (msg.content) {
+      if (allowNonJsonMessages) {
+        try {
+          message = JSON.parse(msg.content.toString()) as T;
+        } catch {
+          // Let handler handle parsing error, it has the raw message anyway
+          message = undefined;
+        }
+      } else {
+        message = JSON.parse(msg.content.toString()) as T;
+      }
     }
-    return consumeEmitter;
+
+    return handler(message, msg);
   }
+
+  // async publish(exchangeName: string, exchangeType: string, content: Buffer) {
+  //   const channel = await this.getChannel();
+  //   await channel.assertExchange(exchangeName, exchangeType, {
+  //     durable: false,
+  //   });
+  //   channel.publish(exchangeName, '', content);
+  // }
+
+  // async subscribe(exchangeName: string, exchangeType: string) {
+
+  //   const channel = await this.getChannel();
+  //   await channel.assertExchange(exchangeName, exchangeType, {
+  //     durable: false,
+  //   });
+  //   const queue = await channel.assertQueue('', {exclusive: true});
+  //   await channel.bindQueue(queue.queue, exchangeName, '');
+  //   const consumeEmitter = new EventEmitter();
+
+  //   try {
+  //     await channel.consume(
+  //       queue.queue,
+  //       message => {
+  //         if (message !== null) {
+  //           consumeEmitter.emit('data', message.content);
+  //         } else {
+  //           const error = new Error('NullMessageException');
+  //           consumeEmitter.emit('error', error);
+  //         }
+  //       },
+  //       {noAck: true},
+  //     );
+  //   } catch (error) {
+  //     consumeEmitter.emit('error', error);
+  //   }
+  //   return consumeEmitter;
+  // }
 }
