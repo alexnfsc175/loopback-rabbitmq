@@ -5,6 +5,18 @@ export interface RabbitMQExchangeConfig {
   name: string;
   type?: string;
   options?: Options.AssertExchange;
+  queues?: ExchangeQueuesOptions[];
+}
+
+export interface ExchangeQueuesOptions {
+  routingKey: string | string[];
+  queue?: string;
+  queueOptions?: QueueOptions;
+  /**
+   * A function that will be called if an error is thrown during processing of an incoming message
+   */
+  errorHandler?: MessageErrorHandler;
+  allowNonJsonMessages?: boolean;
 }
 
 export interface QueueOptions extends amqplib.Options.AssertQueue {}

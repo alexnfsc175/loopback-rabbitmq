@@ -46,6 +46,7 @@ export class RabbitmqConsumer extends EventEmitter {
     debug('getConnection::connection created');
 
     if (this.retries === 0 || this.retries > this.retry + 1) {
+      debug('this.retries', this.retries);
       const restart = (err: Error) => {
         debug('Connection error occurred.', err);
         if (this.connection) {
@@ -121,11 +122,29 @@ export class RabbitmqConsumer extends EventEmitter {
 
   private async setupInitChannel(channel: Channel): Promise<void> {
     for (const exchange of this.componentConfig.exchanges) {
-      await channel.assertExchange(
+      const {exchange: createdExchange} = await channel.assertExchange(
         exchange.name,
         exchange.type ?? this.componentConfig.defaultExchangeType,
         exchange.options,
       );
+
+      const queues = exchange.queues??[];
+
+      for (const q of queues) {
+        const {queue} = await channel.assertQueue(
+          q.queue ?? '',
+          q.queueOptions
+        );
+
+        const routingKeys = Array.isArray(q.routingKey) ? q.routingKey : [q.routingKey];
+
+        await Promise.all(
+          routingKeys.map(route => {
+            debug('bindQueue: ', `${queue} => ${createdExchange} => ${route}`);
+            return channel.bindQueue(queue, createdExchange, route)
+          }),
+        );
+      }
     }
 
     await channel.prefetch(this.componentConfig.prefetchCount);
@@ -181,7 +200,7 @@ export class RabbitmqConsumer extends EventEmitter {
 
         channel.ack(message);
       } catch (error) {
-        console.log('error: ', error);
+        debug('error: ', error, message)
         if (message === null) {
           return;
         } else {
@@ -195,6 +214,7 @@ export class RabbitmqConsumer extends EventEmitter {
       }
     });
     debug('registered:consumer: ', queue);
+    debug('registered:consumer:method: ', handler.name);
   }
 
   private handleMessage<T, U>(
@@ -219,6 +239,7 @@ export class RabbitmqConsumer extends EventEmitter {
       }
     }
 
+    debug('registered:consumer:method:call ', handler.name);
     return handler(message, msg);
   }
 
