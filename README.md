@@ -15,7 +15,7 @@ import {RestApplication} from '@loopback/rest';
 import {RabbitmqBindings, RabbitmqComponent} from 'loopback-rabbitmq';
 
 const app = new RestApplication();
-app.configure(RabbitmqBindings.COMPONENT.to({
+app.configure(RabbitmqBindings.COMPONENT).to({
   options: {
     protocol: process.env.RABBITMQ_PROTOCOL ?? 'amqp',
     hostname: process.env.RABBITMQ_HOST ?? 'localhost',
