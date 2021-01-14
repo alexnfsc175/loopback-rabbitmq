@@ -37,10 +37,10 @@ export interface MessageHandlerOptions {
 
 export interface RabbitmqComponentConfig {
   options: Options.Connect;
-  producer: {
+  producer?: {
     idleTimeoutMillis?: number;
   };
-  consumer: {
+  consumer?: {
     retries: number; // number of retries, 0 is forever
     interval: number; // retry interval in ms
   };
