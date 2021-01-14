@@ -19,7 +19,7 @@ export interface ExchangeQueuesOptions {
   allowNonJsonMessages?: boolean;
 }
 
-export interface QueueOptions extends amqplib.Options.AssertQueue {}
+export interface QueueOptions extends amqplib.Options.AssertQueue { }
 
 
 export interface MessageHandlerOptions {
@@ -61,7 +61,7 @@ export const ConfigDefaults: RabbitmqComponentConfig = {
     interval: 1500,
   },
   exchanges: [],
-  prefetchCount:10,
+  prefetchCount: 10,
   defaultExchangeType: 'topic',
   defaultConsumerErrorBehavior: MessageHandlerErrorBehavior.REQUEUE,
 };

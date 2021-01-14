@@ -90,21 +90,21 @@ export class RabbitmqConsumer extends EventEmitter {
                     this.emit('re-established-connection');
                     resolve();
                   },
-                  () => {},
+                  () => { },
                 );
               } else {
                 this.emit('re-established-connection');
                 resolve();
               }
             },
-            () => {},
+            () => { },
           );
         }
       }, ms);
     });
 
-    const onResolve = () => {};
-    const onReject = () => {};
+    const onResolve = () => { };
+    const onReject = () => { };
 
     promise.then(onResolve, onReject);
   }
@@ -128,7 +128,7 @@ export class RabbitmqConsumer extends EventEmitter {
         exchange.options,
       );
 
-      const queues = exchange.queues??[];
+      const queues = exchange.queues ?? [];
 
       for (const q of queues) {
         const {queue} = await channel.assertQueue(
