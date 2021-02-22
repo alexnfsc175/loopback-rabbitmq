@@ -31,7 +31,7 @@ export namespace RabbitmqBindings {
   /**
    * Binding key for configuration of `RabbitmqComponent`.
    */
-  export const CONFIG: BindingAddress<RabbitmqComponentConfig> = BindingKey.buildKeyForConfig<
-    RabbitmqComponentConfig
-  >(COMPONENT);
+  export const CONFIG: BindingAddress<RabbitmqComponentConfig> = BindingKey.buildKeyForConfig<RabbitmqComponentConfig>(
+    COMPONENT,
+  );
 }

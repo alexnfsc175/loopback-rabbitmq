@@ -5,7 +5,7 @@ import debugFactory from 'debug';
 import {
   ConfigDefaults,
   RabbitmqBindings,
-  RabbitmqComponentConfig
+  RabbitmqComponentConfig,
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:producer');
@@ -127,7 +127,7 @@ export class RabbitmqProducer {
     } else if (message instanceof Uint8Array) {
       buffer = Buffer.from(message);
     } else if (message != null) {
-      buffer = Buffer.from(JSON.stringify(message/*, jsonReplacer */));
+      buffer = Buffer.from(JSON.stringify(message /*, jsonReplacer */));
     } else {
       buffer = Buffer.alloc(0);
     }
