@@ -64,7 +64,26 @@ export class RabbitmqProducer {
     if (!this.channel) {
       this.channel = await connection.createChannel();
       debug('getChannel::channel created');
-    }
+
+      const restart = (err: Error) => {
+        if (this.channel) {
+          this.channel.removeAllListeners('error')
+          this.channel.removeAllListeners('close')
+        };
+        this.channel = undefined;
+      };
+
+      const onClose = () => {
+        restart(new Error('Connection closed by remote host'));
+      };
+
+      this.channel.removeAllListeners('error');
+      this.channel.removeAllListeners('close');
+
+      this.channel.on('error', restart);
+      this.channel.on('close', onClose);
+    };
+
     return this.channel;
   }
 
@@ -89,13 +108,13 @@ export class RabbitmqProducer {
                     this.connection = undefined;
                     resolve();
                   },
-                  () => {},
+                  () => { },
                 );
               } else {
                 resolve();
               }
             },
-            () => {},
+            () => { },
           );
         } else {
           if (this.connection) {
@@ -105,7 +124,7 @@ export class RabbitmqProducer {
                 this.connection = undefined;
                 resolve();
               },
-              () => {},
+              () => { },
             );
           } else {
             resolve();
@@ -114,8 +133,8 @@ export class RabbitmqProducer {
       }, ms);
     });
 
-    const onResolve = () => {};
-    const onReject = () => {};
+    const onResolve = () => { };
+    const onReject = () => { };
 
     promise.then(onResolve, onReject);
   }
