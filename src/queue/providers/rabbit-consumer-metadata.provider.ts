@@ -2,13 +2,13 @@ import {
   Constructor,
   inject,
   MetadataInspector,
-  Provider,
+  Provider
 } from '@loopback/context';
 import {extensionPoint} from '@loopback/core';
 import {
   QueueBindings,
   QUEUE_CONSUMER,
-  RABBIT_CONSUME_METADATA_ACCESSOR,
+  RABBIT_CONSUME_METADATA_ACCESSOR
 } from '../keys';
 import {RabbitQueueMetadata} from '../types';
 
@@ -26,7 +26,6 @@ export class RabbitConsumeMetadataProvider
   ) {}
 
   value(): RabbitQueueMetadata | undefined {
-    console.log('this: ', this);
     if (!this.consumerClass || !this.methodName) return;
     return getRabbitConsumeMetadata(this.consumerClass, this.methodName);
   }

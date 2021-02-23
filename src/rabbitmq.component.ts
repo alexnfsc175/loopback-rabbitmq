@@ -11,7 +11,7 @@ import {
   createBindingFromClass,
   inject,
   LifeCycleObserver,
-  ProviderMap,
+  ProviderMap
 } from '@loopback/core';
 import debugFactory from 'debug';
 import {ConfigDefaults, RabbitmqComponentConfig} from './interfaces';
@@ -34,7 +34,7 @@ export class RabbitmqComponent implements Component {
     @config()
     private options: RabbitmqComponentConfig = ConfigDefaults,
   ) {
-    console.log('options: ', options);
+    debug('options: %o', options);
     debug('RabbitmqComponent::init');
     this.bindings = [
       createBindingFromClass(RabbitmqProducer, {
