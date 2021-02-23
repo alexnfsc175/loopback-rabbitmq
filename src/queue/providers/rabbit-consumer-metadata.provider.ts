@@ -13,7 +13,7 @@ import {
 import {RabbitQueueMetadata} from '../types';
 
 /**
- * An extension point for greeters that can greet in different languages
+ * An extension point for Queue Consumer
  */
 @extensionPoint(QUEUE_CONSUMER)
 export class RabbitConsumeMetadataProvider
