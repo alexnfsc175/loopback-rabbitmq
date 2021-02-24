@@ -28,8 +28,8 @@ export class RabbitmqProducer {
     @config({fromBinding: RabbitmqBindings.COMPONENT})
     private componentConfig: RabbitmqComponentConfig = ConfigDefaults,
   ) {
-    debug('created an instance of RabbitmqProducer');
     this.componentConfig = {...ConfigDefaults, ...this.componentConfig};
+    debug('created an instance of RabbitmqProducer: %o', this.componentConfig);
   }
 
   private async getConnection(): Promise<Connection> {
@@ -48,11 +48,13 @@ export class RabbitmqProducer {
     };
     const onClose = () => {
       if (this.connection) this.connection.removeListener('close', onClose);
+      this.connection = undefined;
       restart(new Error('Connection closed by remote host'));
     };
 
     this.connection.removeAllListeners('error');
     this.connection.removeAllListeners('close');
+
     this.connection.on('error', restart);
     this.connection.on('close', onClose);
 
@@ -66,14 +68,12 @@ export class RabbitmqProducer {
       debug('getChannel::channel created');
 
       const restart = (err: Error) => {
-        if (this.channel) {
-          this.channel.removeAllListeners('error')
-          this.channel.removeAllListeners('close')
-        };
+        if (this.channel) this.channel.removeAllListeners('error');
         this.channel = undefined;
       };
 
       const onClose = () => {
+        if (this.channel) this.channel.removeAllListeners('close')
         restart(new Error('Connection closed by remote host'));
       };
 
@@ -94,7 +94,7 @@ export class RabbitmqProducer {
     }
     const promise = new Promise<void>(resolve => {
       this.timeoutId = setTimeout(() => {
-        debug('timeout::Ending consumer due to timeout');
+        debug('timeout::Ending producer due to timeout');
         if (this.channel) {
           this.channel.close().then(
             () => {
