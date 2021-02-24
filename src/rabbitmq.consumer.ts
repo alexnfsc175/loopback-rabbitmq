@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {bind, BindingScope, config} from '@loopback/core';
 import amqp, {Channel, Connection} from 'amqplib';
 import debugFactory from 'debug';
@@ -10,7 +9,7 @@ import {
   Nack,
   RabbitmqBindings,
   RabbitmqComponentConfig,
-  SubscribeResponse
+  SubscribeResponse,
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:consumer');
@@ -90,21 +89,21 @@ export class RabbitmqConsumer extends EventEmitter {
                     this.emit('re-established-connection');
                     resolve();
                   },
-                  () => { },
+                  () => {},
                 );
               } else {
                 this.emit('re-established-connection');
                 resolve();
               }
             },
-            () => { },
+            () => {},
           );
         }
       }, ms);
     });
 
-    const onResolve = () => { };
-    const onReject = () => { };
+    const onResolve = () => {};
+    const onReject = () => {};
 
     promise.then(onResolve, onReject);
   }
@@ -133,15 +132,17 @@ export class RabbitmqConsumer extends EventEmitter {
       for (const q of queues) {
         const {queue} = await channel.assertQueue(
           q.queue ?? '',
-          q.queueOptions
+          q.queueOptions,
         );
 
-        const routingKeys = Array.isArray(q.routingKey) ? q.routingKey : [q.routingKey];
+        const routingKeys = Array.isArray(q.routingKey)
+          ? q.routingKey
+          : [q.routingKey];
 
         await Promise.all(
           routingKeys.map(route => {
             debug('bindQueue: ', `${queue} => ${createdExchange} => ${route}`);
-            return channel.bindQueue(queue, createdExchange, route)
+            return channel.bindQueue(queue, createdExchange, route);
           }),
         );
       }
@@ -170,11 +171,12 @@ export class RabbitmqConsumer extends EventEmitter {
 
     await Promise.all(
       routingKeys.map(route => {
-        debug('bindQueue: ', `${queue} => ${exchange} => ${route}`)
-        return channel.bindQueue(queue, exchange, route)
+        debug('bindQueue: ', `${queue} => ${exchange} => ${route}`);
+        return channel.bindQueue(queue, exchange, route);
       }),
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     await channel.consume(queue, async message => {
       try {
         if (message == null) {
@@ -200,7 +202,7 @@ export class RabbitmqConsumer extends EventEmitter {
 
         channel.ack(message);
       } catch (error) {
-        debug('error: ', error, message)
+        debug('error: ', error, message);
         if (message === null) {
           return;
         } else {

@@ -5,7 +5,7 @@ import debugFactory from 'debug';
 import {
   ConfigDefaults,
   RabbitmqBindings,
-  RabbitmqComponentConfig
+  RabbitmqComponentConfig,
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:producer');
@@ -73,7 +73,7 @@ export class RabbitmqProducer {
       };
 
       const onClose = () => {
-        if (this.channel) this.channel.removeAllListeners('close')
+        if (this.channel) this.channel.removeAllListeners('close');
         restart(new Error('Connection closed by remote host'));
       };
 
@@ -82,7 +82,7 @@ export class RabbitmqProducer {
 
       this.channel.on('error', restart);
       this.channel.on('close', onClose);
-    };
+    }
 
     return this.channel;
   }
@@ -108,13 +108,13 @@ export class RabbitmqProducer {
                     this.connection = undefined;
                     resolve();
                   },
-                  () => { },
+                  () => {},
                 );
               } else {
                 resolve();
               }
             },
-            () => { },
+            () => {},
           );
         } else {
           if (this.connection) {
@@ -124,7 +124,7 @@ export class RabbitmqProducer {
                 this.connection = undefined;
                 resolve();
               },
-              () => { },
+              () => {},
             );
           } else {
             resolve();
@@ -133,8 +133,8 @@ export class RabbitmqProducer {
       }, ms);
     });
 
-    const onResolve = () => { };
-    const onReject = () => { };
+    const onResolve = () => {};
+    const onReject = () => {};
 
     promise.then(onResolve, onReject);
   }
@@ -146,7 +146,7 @@ export class RabbitmqProducer {
     } else if (message instanceof Uint8Array) {
       buffer = Buffer.from(message);
     } else if (message != null) {
-      buffer = Buffer.from(JSON.stringify(message/*, jsonReplacer */));
+      buffer = Buffer.from(JSON.stringify(message /*, jsonReplacer */));
     } else {
       buffer = Buffer.alloc(0);
     }

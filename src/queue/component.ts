@@ -3,7 +3,6 @@ import {
   Binding,
   BindingScope,
   Component,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   config,
   Constructor,
   ContextTags,

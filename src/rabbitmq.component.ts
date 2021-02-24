@@ -1,12 +1,17 @@
 import {
   Application,
   bind,
-  Binding, BindingScope, Component,
+  Binding,
+  BindingScope,
+  Component,
   config,
   Constructor,
   ContextTags,
   CoreBindings,
-  createBindingFromClass, inject, LifeCycleObserver, ProviderMap
+  createBindingFromClass,
+  inject,
+  LifeCycleObserver,
+  ProviderMap,
 } from '@loopback/core';
 import debugFactory from 'debug';
 import {ConfigDefaults, RabbitmqComponentConfig} from './interfaces';
@@ -29,7 +34,7 @@ export class RabbitmqComponent implements Component {
     @config()
     private options: RabbitmqComponentConfig = ConfigDefaults,
   ) {
-    console.log('options: ', options);
+    debug('options: %o', options);
     debug('RabbitmqComponent::init');
     this.bindings = [
       createBindingFromClass(RabbitmqProducer, {
@@ -38,7 +43,7 @@ export class RabbitmqComponent implements Component {
 
       createBindingFromClass(RabbitmqConsumer, {
         key: RabbitmqBindings.RABBITMQ_CONSUMER,
-      })
+      }),
     ];
   }
 }

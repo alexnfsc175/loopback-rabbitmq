@@ -1,5 +1,8 @@
 import amqplib, {Options} from 'amqplib';
-import {MessageErrorHandler, MessageHandlerErrorBehavior} from './rabbitmq.error.behaviors';
+import {
+  MessageErrorHandler,
+  MessageHandlerErrorBehavior,
+} from './rabbitmq.error.behaviors';
 
 export interface RabbitMQExchangeConfig {
   name: string;
@@ -19,8 +22,7 @@ export interface ExchangeQueuesOptions {
   allowNonJsonMessages?: boolean;
 }
 
-export interface QueueOptions extends amqplib.Options.AssertQueue { }
-
+export interface QueueOptions extends amqplib.Options.AssertQueue {}
 
 export interface MessageHandlerOptions {
   exchange: string;
@@ -33,7 +35,6 @@ export interface MessageHandlerOptions {
   errorHandler?: MessageErrorHandler;
   allowNonJsonMessages?: boolean;
 }
-
 
 export interface RabbitmqComponentConfig {
   options: Options.Connect;

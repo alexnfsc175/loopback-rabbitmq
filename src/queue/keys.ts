@@ -27,9 +27,9 @@ export namespace QueueBindings {
    * Binding key for the controller class resolved in the current request
    * context
    */
-  export const CONSUMER_CLASS: BindingKey<ConsumerClass> = BindingKey.create<
-    ConsumerClass
-  >('queue.consumer.current.ctor');
+  export const CONSUMER_CLASS: BindingKey<ConsumerClass> = BindingKey.create<ConsumerClass>(
+    'queue.consumer.current.ctor',
+  );
 
   /**
    * Binding key for the consumer method resolved

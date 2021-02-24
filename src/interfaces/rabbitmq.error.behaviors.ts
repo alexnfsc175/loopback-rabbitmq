@@ -12,7 +12,7 @@ export {ConsumeMessage, Options} from 'amqplib';
 export type MessageErrorHandler = (
   channel: amqplib.Channel,
   msg: amqplib.ConsumeMessage,
-  error: any
+  error: any,
 ) => Promise<void> | void;
 
 /**
@@ -28,7 +28,7 @@ export const ackErrorHandler: MessageErrorHandler = (channel, msg, error) => {
 export const requeueErrorHandler: MessageErrorHandler = (
   channel,
   msg,
-  error
+  error,
 ) => {
   channel.nack(msg, false, true);
 };
@@ -39,13 +39,13 @@ export const requeueErrorHandler: MessageErrorHandler = (
 export const defaultNackErrorHandler: MessageErrorHandler = (
   channel,
   msg,
-  error
+  error,
 ) => {
   channel.nack(msg, false, false);
 };
 
 export const getHandlerErrorBehavior = (
-  behavior: MessageHandlerErrorBehavior
+  behavior: MessageHandlerErrorBehavior,
 ) => {
   switch (behavior) {
     case MessageHandlerErrorBehavior.ACK:
