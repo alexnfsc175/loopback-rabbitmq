@@ -11,7 +11,7 @@ import {
   createBindingFromClass,
   inject,
   LifeCycleObserver,
-  ProviderMap
+  ProviderMap,
 } from '@loopback/core';
 import debugFactory from 'debug';
 import {ConfigDefaults, RabbitmqComponentConfig} from './interfaces';
