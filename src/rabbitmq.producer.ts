@@ -46,6 +46,7 @@ export class RabbitmqProducer {
     const restart = (err: Error) => {
       if (this.connection) this.connection.removeListener('error', restart);
       this.connection = undefined;
+      this.channel = undefined;
     };
 
     const onClose = () => {
