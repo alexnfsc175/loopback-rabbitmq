@@ -5,7 +5,7 @@ import debugFactory from 'debug';
 import {
   ConfigDefaults,
   RabbitmqBindings,
-  RabbitmqComponentConfig
+  RabbitmqComponentConfig,
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:producer');
@@ -28,8 +28,8 @@ export class RabbitmqProducer {
     @config({fromBinding: RabbitmqBindings.COMPONENT})
     private componentConfig: RabbitmqComponentConfig = ConfigDefaults,
   ) {
-    debug('created an instance of RabbitmqProducer');
     this.componentConfig = {...ConfigDefaults, ...this.componentConfig};
+    debug('created an instance of RabbitmqProducer: %o', this.componentConfig);
   }
 
   private async getConnection(): Promise<Connection> {
@@ -45,7 +45,10 @@ export class RabbitmqProducer {
 
     const restart = (err: Error) => {
       if (this.connection) this.connection.removeListener('error', restart);
+      this.connection = undefined;
+      this.channel = undefined;
     };
+
     const onClose = () => {
       if (this.connection) this.connection.removeListener('close', onClose);
       restart(new Error('Connection closed by remote host'));
@@ -53,6 +56,7 @@ export class RabbitmqProducer {
 
     this.connection.removeAllListeners('error');
     this.connection.removeAllListeners('close');
+
     this.connection.on('error', restart);
     this.connection.on('close', onClose);
 
@@ -64,7 +68,24 @@ export class RabbitmqProducer {
     if (!this.channel) {
       this.channel = await connection.createChannel();
       debug('getChannel::channel created');
+
+      const restart = (err: Error) => {
+        if (this.channel) this.channel.removeAllListeners('error');
+        this.channel = undefined;
+      };
+
+      const onClose = () => {
+        if (this.channel) this.channel.removeAllListeners('close');
+        restart(new Error('Connection closed by remote host'));
+      };
+
+      this.channel.removeAllListeners('error');
+      this.channel.removeAllListeners('close');
+
+      this.channel.on('error', restart);
+      this.channel.on('close', onClose);
     }
+
     return this.channel;
   }
 
@@ -75,7 +96,7 @@ export class RabbitmqProducer {
     }
     const promise = new Promise<void>(resolve => {
       this.timeoutId = setTimeout(() => {
-        debug('timeout::Ending consumer due to timeout');
+        debug('timeout::Ending producer due to timeout');
         if (this.channel) {
           this.channel.close().then(
             () => {
@@ -127,7 +148,7 @@ export class RabbitmqProducer {
     } else if (message instanceof Uint8Array) {
       buffer = Buffer.from(message);
     } else if (message != null) {
-      buffer = Buffer.from(JSON.stringify(message/*, jsonReplacer */));
+      buffer = Buffer.from(JSON.stringify(message /*, jsonReplacer */));
     } else {
       buffer = Buffer.alloc(0);
     }
@@ -150,13 +171,17 @@ export class RabbitmqProducer {
 
   public async publish(
     exchange: string,
-    routingKey: string,
+    routingKey: string | string[],
     message: any,
     options?: amqp.Options.Publish,
   ) {
     const channel = await this.getChannel();
     const buffer = this.parseToBuffer(message);
 
-    channel.publish(exchange, routingKey, buffer, options);
+    const routingKeys = Array.isArray(routingKey) ? routingKey : [routingKey];
+
+    for (const route of routingKeys) {
+      channel.publish(exchange, route, buffer, options);
+    }
   }
 }

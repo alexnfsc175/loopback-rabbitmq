@@ -1,5 +1,8 @@
 import amqplib, {Options} from 'amqplib';
-import {MessageErrorHandler, MessageHandlerErrorBehavior} from './rabbitmq.error.behaviors';
+import {
+  MessageErrorHandler,
+  MessageHandlerErrorBehavior,
+} from './rabbitmq.error.behaviors';
 
 export interface RabbitMQExchangeConfig {
   name: string;
@@ -21,8 +24,7 @@ export interface ExchangeQueuesOptions {
 
 export interface QueueOptions extends amqplib.Options.AssertQueue {}
 
-
-export interface MessageHandlerOptions {
+export interface RabbitQueueMetadata {
   exchange: string;
   routingKey: string | string[];
   queue?: string;
@@ -34,18 +36,19 @@ export interface MessageHandlerOptions {
   allowNonJsonMessages?: boolean;
 }
 
-
 export interface RabbitmqComponentConfig {
   options: Options.Connect;
-  producer: {
+  producer?: {
     idleTimeoutMillis?: number;
   };
-  consumer: {
+  consumer?: {
     retries: number; // number of retries, 0 is forever
     interval: number; // retry interval in ms
   };
   exchanges?: RabbitMQExchangeConfig[];
   defaultExchangeType?: string;
+  defaultExchangeOptions?: Options.AssertExchange;
+  defaultQueueOptions?: QueueOptions;
   defaultSubscribeErrorBehavior?: MessageHandlerErrorBehavior;
   defaultConsumerErrorBehavior?: MessageHandlerErrorBehavior;
   prefetchCount?: number;
@@ -61,7 +64,15 @@ export const ConfigDefaults: RabbitmqComponentConfig = {
     interval: 1500,
   },
   exchanges: [],
-  prefetchCount:10,
+  prefetchCount: 10,
   defaultExchangeType: 'topic',
+  defaultExchangeOptions: {
+    durable: true,
+    autoDelete: false,
+  },
+  defaultQueueOptions: {
+    durable: true,
+    autoDelete: false,
+  },
   defaultConsumerErrorBehavior: MessageHandlerErrorBehavior.REQUEUE,
 };
