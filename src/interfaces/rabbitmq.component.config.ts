@@ -37,7 +37,7 @@ export interface MessageHandlerOptions {
 }
 
 export interface RabbitmqComponentConfig {
-  options: Options.Connect;
+  options?: string | Options.Connect;
   producer?: {
     idleTimeoutMillis?: number;
   };
@@ -53,7 +53,6 @@ export interface RabbitmqComponentConfig {
 }
 
 export const ConfigDefaults: RabbitmqComponentConfig = {
-  options: {},
   producer: {
     idleTimeoutMillis: 10000,
   },
