@@ -83,6 +83,6 @@ function toOptions(nameOrOptions?: string | BindingFromClassOptions) {
  */
 export const ConsumersDefaults: ArtifactOptions = {
   dirs: ['consumers'],
-  extensions: ['.consumer.js'],
+  extensions: ['.consumers.js'],
   nested: true,
 };
