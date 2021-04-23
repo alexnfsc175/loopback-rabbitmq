@@ -1,4 +1,4 @@
-import {BindingAddress, BindingKey} from '@loopback/core';
+import {BindingAddress, BindingKey, CoreBindings} from '@loopback/core';
 import {RabbitmqComponentConfig} from './interfaces';
 import {RabbitmqComponent} from './rabbitmq.component';
 import {RabbitmqConsumer} from './rabbitmq.consumer';
@@ -12,26 +12,26 @@ export namespace RabbitmqBindings {
    * Binding key for `RabbitmqProducer`
    */
   export const RABBITMQ_PRODUCER = BindingKey.create<RabbitmqProducer>(
-    'components.RabbitmqProducer',
+    `${CoreBindings.COMPONENTS}.RabbitmqProducer`,
   );
 
   /**
    * Binding key for `RabbitmqConsumer`
    */
   export const RABBITMQ_CONSUMER = BindingKey.create<RabbitmqConsumer>(
-    'components.RabbitmqConsumer',
+    `${CoreBindings.COMPONENTS}.RabbitmqConsumer`,
   );
   /**
    * Binding key for `RabbitmqComponent`
    */
   export const COMPONENT = BindingKey.create<RabbitmqComponent>(
-    'components.RabbitmqComponent',
+    `${CoreBindings.COMPONENTS}.RabbitmqComponent`,
   );
 
   /**
    * Binding key for configuration of `RabbitmqComponent`.
    */
-  export const CONFIG: BindingAddress<RabbitmqComponentConfig> = BindingKey.buildKeyForConfig<
-    RabbitmqComponentConfig
-  >(COMPONENT);
+  export const CONFIG: BindingAddress<RabbitmqComponentConfig> = BindingKey.buildKeyForConfig<RabbitmqComponentConfig>(
+    COMPONENT,
+  );
 }
