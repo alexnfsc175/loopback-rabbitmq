@@ -5,11 +5,11 @@ import {EventEmitter} from 'events';
 import {
   ConfigDefaults,
   getHandlerErrorBehavior,
-  MessageHandlerOptions,
   Nack,
   RabbitmqBindings,
   RabbitmqComponentConfig,
-  SubscribeResponse,
+  RabbitQueueMetadata,
+  SubscribeResponse
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:consumer');
@@ -45,7 +45,7 @@ export class RabbitmqConsumer extends EventEmitter {
     debug('getConnection::connection created');
 
     if (this.retries === 0 || this.retries > this.retry + 1) {
-      debug('this.retries', this.retries);
+      debug('connection:retries', this.retries);
       const restart = (err: Error) => {
         debug('Connection error occurred.', err);
         if (this.connection) {
@@ -121,19 +121,21 @@ export class RabbitmqConsumer extends EventEmitter {
 
   private async setupInitChannel(channel: Channel): Promise<void> {
     for (const exchange of this.componentConfig.exchanges) {
-      const {exchange: createdExchange} = await channel.assertExchange(
+      const {
+        exchange: createdExchange,
+      } = await channel.assertExchange(
         exchange.name,
         exchange.type ?? this.componentConfig.defaultExchangeType,
-        exchange.options,
+        {...this.componentConfig.defaultExchangeOptions, ...exchange.options},
       );
 
       const queues = exchange.queues ?? [];
 
       for (const q of queues) {
-        const {queue} = await channel.assertQueue(
-          q.queue ?? '',
-          q.queueOptions,
-        );
+        const {queue} = await channel.assertQueue(q.queue ?? '', {
+          ...this.componentConfig.defaultQueueOptions,
+          ...q.queueOptions,
+        });
 
         const routingKeys = Array.isArray(q.routingKey)
           ? q.routingKey
@@ -156,16 +158,16 @@ export class RabbitmqConsumer extends EventEmitter {
       msg: T | undefined,
       rawMessage?: amqp.ConsumeMessage,
     ) => Promise<SubscribeResponse>,
-    msgOptions: MessageHandlerOptions,
+    msgOptions: RabbitQueueMetadata,
   ): Promise<void> {
     const channel = await this.getChannel();
 
     const {exchange, routingKey, allowNonJsonMessages} = msgOptions;
 
-    const {queue} = await channel.assertQueue(
-      msgOptions.queue ?? '',
-      msgOptions.queueOptions,
-    );
+    const {queue} = await channel.assertQueue(msgOptions.queue ?? '', {
+      ...this.componentConfig.defaultQueueOptions,
+      ...msgOptions.queueOptions,
+    });
 
     const routingKeys = Array.isArray(routingKey) ? routingKey : [routingKey];
 
@@ -178,6 +180,7 @@ export class RabbitmqConsumer extends EventEmitter {
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     await channel.consume(queue, async message => {
+      debug(`queue:${queue}: new Message`);
       try {
         if (message == null) {
           throw new Error('Received null message');
@@ -215,8 +218,9 @@ export class RabbitmqConsumer extends EventEmitter {
         }
       }
     });
+    const methodName = handler.name.replace('bound ', '');
     debug('registered:consumer: ', queue);
-    debug('registered:consumer:method: ', handler.name);
+    debug('registered:consumer:method: ', methodName);
   }
 
   private handleMessage<T, U>(
@@ -241,7 +245,9 @@ export class RabbitmqConsumer extends EventEmitter {
       }
     }
 
-    debug('registered:consumer:method:call ', handler.name);
+    const methodName = handler.name.replace('bound ', '');
+    debug(`consumer:${methodName} new message: %o`, message);
+    debug('registered:consumer:method:call ', methodName);
     return handler(message, msg);
   }
 

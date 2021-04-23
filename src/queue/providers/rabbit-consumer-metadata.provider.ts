@@ -2,15 +2,15 @@ import {
   Constructor,
   inject,
   MetadataInspector,
-  Provider,
+  Provider
 } from '@loopback/context';
 import {extensionPoint} from '@loopback/core';
+import {RabbitQueueMetadata} from '../../interfaces';
 import {
   QueueBindings,
   QUEUE_CONSUMER,
-  RABBIT_CONSUME_METADATA_ACCESSOR,
+  RABBIT_CONSUME_METADATA_ACCESSOR
 } from '../keys';
-import {RabbitQueueMetadata} from '../types';
 
 /**
  * An extension point for Queue Consumer

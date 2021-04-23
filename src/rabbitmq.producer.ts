@@ -5,7 +5,7 @@ import debugFactory from 'debug';
 import {
   ConfigDefaults,
   RabbitmqBindings,
-  RabbitmqComponentConfig
+  RabbitmqComponentConfig,
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:producer');
@@ -171,13 +171,17 @@ export class RabbitmqProducer {
 
   public async publish(
     exchange: string,
-    routingKey: string,
+    routingKey: string | string[],
     message: any,
     options?: amqp.Options.Publish,
   ) {
     const channel = await this.getChannel();
     const buffer = this.parseToBuffer(message);
 
-    channel.publish(exchange, routingKey, buffer, options);
+    const routingKeys = Array.isArray(routingKey) ? routingKey : [routingKey];
+
+    for (const route of routingKeys) {
+      channel.publish(exchange, route, buffer, options);
+    }
   }
 }

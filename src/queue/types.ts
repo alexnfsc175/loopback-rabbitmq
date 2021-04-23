@@ -5,12 +5,10 @@ import {
   Constructor,
   ContextTags,
   extensionFor,
-  Provider,
+  Provider
 } from '@loopback/core';
 import {EventEmitter} from 'events';
-// import {QueueOptions} from 'loopback-rabbitmq';
 import {QUEUE_CONSUMER} from '.';
-import {QueueOptions} from '../interfaces';
 import {QueueBindings} from './keys';
 
 /**
@@ -56,10 +54,3 @@ export function asQueueConsumer<T = unknown>(binding: Binding<T>) {
 }
 
 export type ConsumerClass<T = any> = Constructor<T>;
-
-export interface RabbitQueueMetadata {
-  exchange: string;
-  routingKey: string;
-  queue?: string;
-  queueOptions?: QueueOptions;
-}

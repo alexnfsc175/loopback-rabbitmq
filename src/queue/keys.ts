@@ -1,10 +1,7 @@
 import {BindingKey, MetadataAccessor} from '@loopback/core';
+import {RabbitQueueMetadata} from '../interfaces';
 import {QueueComponent} from './component';
-import {
-  ConsumerClass,
-  QueueComponentConfig,
-  RabbitQueueMetadata,
-} from './types';
+import {ConsumerClass, QueueComponentConfig} from './types';
 
 export namespace QueueBindings {
   export const CONSUMERS = 'queue.consumers';

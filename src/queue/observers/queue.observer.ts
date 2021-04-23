@@ -8,15 +8,16 @@ import {
   inject,
   lifeCycleObserver,
   LifeCycleObserver,
-  MetadataInspector,
+  MetadataInspector
 } from '@loopback/core';
 import {RabbitmqBindings, RabbitmqConsumer} from '../..';
+import {RabbitQueueMetadata} from '../../interfaces';
 import {
   QueueBindings,
   QUEUE_CONSUMER,
-  RABBIT_CONSUME_METADATA_ACCESSOR,
+  RABBIT_CONSUME_METADATA_ACCESSOR
 } from '../keys';
-import {QueueConsumer, RabbitQueueMetadata} from '../types';
+import {QueueConsumer} from '../types';
 
 @extensionPoint(QUEUE_CONSUMER, {
   tags: [{[ContextTags.KEY]: QueueBindings.COMPONENT.key}],

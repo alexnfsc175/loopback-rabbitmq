@@ -1,7 +1,7 @@
 import amqplib, {Options} from 'amqplib';
 import {
   MessageErrorHandler,
-  MessageHandlerErrorBehavior,
+  MessageHandlerErrorBehavior
 } from './rabbitmq.error.behaviors';
 
 export interface RabbitMQExchangeConfig {
@@ -24,7 +24,7 @@ export interface ExchangeQueuesOptions {
 
 export interface QueueOptions extends amqplib.Options.AssertQueue {}
 
-export interface MessageHandlerOptions {
+export interface RabbitQueueMetadata {
   exchange: string;
   routingKey: string | string[];
   queue?: string;
@@ -47,6 +47,8 @@ export interface RabbitmqComponentConfig {
   };
   exchanges?: RabbitMQExchangeConfig[];
   defaultExchangeType?: string;
+  defaultExchangeOptions?: Options.AssertExchange;
+  defaultQueueOptions?: QueueOptions;
   defaultSubscribeErrorBehavior?: MessageHandlerErrorBehavior;
   defaultConsumerErrorBehavior?: MessageHandlerErrorBehavior;
   prefetchCount?: number;
@@ -63,5 +65,13 @@ export const ConfigDefaults: RabbitmqComponentConfig = {
   exchanges: [],
   prefetchCount: 10,
   defaultExchangeType: 'topic',
+  defaultExchangeOptions: {
+    durable: true,
+    autoDelete: false,
+  },
+  defaultQueueOptions: {
+    durable: true,
+    autoDelete: false,
+  },
   defaultConsumerErrorBehavior: MessageHandlerErrorBehavior.REQUEUE,
 };

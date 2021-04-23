@@ -1,7 +1,7 @@
 import {MethodDecoratorFactory} from '@loopback/core';
 import debugFactory from 'debug';
+import {RabbitQueueMetadata} from '../../interfaces';
 import {RABBIT_CONSUME_METADATA_ACCESSOR} from '../keys';
-import {RabbitQueueMetadata} from '../types';
 const debug = debugFactory('loopback:queue-consumer:decorator: ');
 
 export function rabbitConsume(queue: RabbitQueueMetadata) {

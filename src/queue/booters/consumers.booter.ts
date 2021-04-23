@@ -3,7 +3,7 @@ import {
   ArtifactOptions,
   BaseArtifactBooter,
   BootBindings,
-  booter,
+  booter
 } from '@loopback/boot';
 import {
   Application,
@@ -12,7 +12,7 @@ import {
   config,
   CoreBindings,
   createBindingFromClass,
-  inject,
+  inject
 } from '@loopback/core';
 import debugFactory from 'debug';
 import {asQueueConsumer, ConsumerClass} from '../types';
