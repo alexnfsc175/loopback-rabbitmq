@@ -5,7 +5,7 @@ import {
   Constructor,
   ContextTags,
   extensionFor,
-  Provider,
+  Provider
 } from '@loopback/core';
 import {EventEmitter} from 'events';
 import {QUEUE_CONSUMER} from '.';

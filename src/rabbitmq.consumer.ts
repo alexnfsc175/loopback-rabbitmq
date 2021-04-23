@@ -9,7 +9,7 @@ import {
   RabbitmqBindings,
   RabbitmqComponentConfig,
   RabbitQueueMetadata,
-  SubscribeResponse,
+  SubscribeResponse
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:consumer');

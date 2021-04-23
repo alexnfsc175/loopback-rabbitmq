@@ -110,13 +110,13 @@ export class RabbitmqProducer {
                     this.connection = undefined;
                     resolve();
                   },
-                  () => {},
+                  () => { },
                 );
               } else {
                 resolve();
               }
             },
-            () => {},
+            () => { },
           );
         } else {
           if (this.connection) {
@@ -126,7 +126,7 @@ export class RabbitmqProducer {
                 this.connection = undefined;
                 resolve();
               },
-              () => {},
+              () => { },
             );
           } else {
             resolve();
@@ -135,8 +135,8 @@ export class RabbitmqProducer {
       }, ms);
     });
 
-    const onResolve = () => {};
-    const onReject = () => {};
+    const onResolve = () => { };
+    const onReject = () => { };
 
     promise.then(onResolve, onReject);
   }
