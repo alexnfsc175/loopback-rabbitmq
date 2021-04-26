@@ -1,7 +1,7 @@
 import amqplib, {Options} from 'amqplib';
 import {
   MessageErrorHandler,
-  MessageHandlerErrorBehavior,
+  MessageHandlerErrorBehavior
 } from './rabbitmq.error.behaviors';
 
 export interface RabbitMQExchangeConfig {
@@ -37,7 +37,7 @@ export interface RabbitQueueMetadata {
 }
 
 export interface RabbitmqComponentConfig {
-  options: Options.Connect;
+  options?: string | Options.Connect;
   producer?: {
     idleTimeoutMillis?: number;
   };
@@ -55,7 +55,6 @@ export interface RabbitmqComponentConfig {
 }
 
 export const ConfigDefaults: RabbitmqComponentConfig = {
-  options: {},
   producer: {
     idleTimeoutMillis: 10000,
   },
