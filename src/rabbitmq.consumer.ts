@@ -41,7 +41,11 @@ export class RabbitmqConsumer extends EventEmitter {
       return this.connection;
     }
 
-    this.connection = await amqp.connect(this.componentConfig.options);
+    this.connection = await amqp.connect(this.componentConfig.options)
+      .catch(error => {
+        this.timeout(this.interval);
+        throw error;
+      });
     debug('getConnection::connection created');
 
     if (this.retries === 0 || this.retries > this.retry + 1) {
