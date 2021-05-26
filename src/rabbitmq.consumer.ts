@@ -42,10 +42,7 @@ export class RabbitmqConsumer extends EventEmitter {
     }
 
     this.connection = await amqp.connect(this.componentConfig.options)
-      .catch(error => {
-        this.timeout(this.interval);
-        throw error;
-      });
+
     debug('getConnection::connection created');
 
     if (this.retries === 0 || this.retries > this.retry + 1) {
@@ -78,13 +75,14 @@ export class RabbitmqConsumer extends EventEmitter {
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
     }
-    const promise = new Promise<void>(resolve => {
+    const promise = new Promise<void>((resolve, reject) => {
       this.timeoutId = setTimeout(() => {
         debug(`timeout::Connection retry ${this.retry + 1} in ${ms} ms`);
         if (!this.connection) {
+          ++this.retry;
           this.getConnection().then(
             () => {
-              ++this.retry;
+              this.retry = 0;
               debug('timeout::connection created');
               if (!this.channel) {
                 this.getChannel().then(
@@ -100,7 +98,11 @@ export class RabbitmqConsumer extends EventEmitter {
                 resolve();
               }
             },
-            () => {},
+            (error) => {
+              this.timeout(this.interval);
+              debug(error.message);
+              reject(error);
+            },
           );
         }
       }, ms);
