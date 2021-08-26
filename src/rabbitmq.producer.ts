@@ -5,7 +5,7 @@ import debugFactory from 'debug';
 import {
   ConfigDefaults,
   RabbitmqBindings,
-  RabbitmqComponentConfig,
+  RabbitmqComponentConfig
 } from './index';
 
 const debug = debugFactory('loopback:rabbitmq:producer');
@@ -23,6 +23,8 @@ export class RabbitmqProducer {
   private connection: Connection | undefined;
   private channel: Channel | undefined;
   private timeoutId: NodeJS.Timeout;
+  private channelIsClosing = false;
+  private connectionIsClosing = false;
 
   constructor(
     @config({fromBinding: RabbitmqBindings.COMPONENT})
@@ -36,37 +38,38 @@ export class RabbitmqProducer {
     if (this.componentConfig.producer?.idleTimeoutMillis)
       this.timeout(this.componentConfig.producer?.idleTimeoutMillis);
 
-    if (this.connection) {
-      return this.connection;
+    if (!this.connection || this.connectionIsClosing) {
+      this.connection = await amqp.connect(this.componentConfig.options!);
+      this.connectionIsClosing = false;
+      debug('getConnection::connection created');
+
+      const restart = (err: Error) => {
+        if (this.connection) this.connection.removeListener('error', restart);
+        this.connection = undefined;
+        this.channel = undefined;
+      };
+
+      const onClose = () => {
+        if (this.connection) this.connection.removeListener('close', onClose);
+        this.connectionIsClosing = true;
+        restart(new Error('Connection closed by remote host'));
+      };
+
+      this.connection.removeAllListeners('error');
+      this.connection.removeAllListeners('close');
+
+      this.connection.on('error', restart);
+      this.connection.on('close', onClose);
     }
-
-    this.connection = await amqp.connect(this.componentConfig.options!);
-    debug('getConnection::connection created');
-
-    const restart = (err: Error) => {
-      if (this.connection) this.connection.removeListener('error', restart);
-      this.connection = undefined;
-      this.channel = undefined;
-    };
-
-    const onClose = () => {
-      if (this.connection) this.connection.removeListener('close', onClose);
-      restart(new Error('Connection closed by remote host'));
-    };
-
-    this.connection.removeAllListeners('error');
-    this.connection.removeAllListeners('close');
-
-    this.connection.on('error', restart);
-    this.connection.on('close', onClose);
 
     return this.connection;
   }
 
   private async getChannel(): Promise<Channel> {
     const connection = await this.getConnection();
-    if (!this.channel) {
+    if (!this.channel || this.channelIsClosing) {
       this.channel = await connection.createChannel();
+      this.channelIsClosing = false;
       debug('getChannel::channel created');
 
       const restart = (err: Error) => {
@@ -76,6 +79,7 @@ export class RabbitmqProducer {
 
       const onClose = () => {
         if (this.channel) this.channel.removeAllListeners('close');
+        this.channelIsClosing = true;
         restart(new Error('Connection closed by remote host'));
       };
 
@@ -98,6 +102,7 @@ export class RabbitmqProducer {
       this.timeoutId = setTimeout(() => {
         debug('timeout::Ending producer due to timeout');
         if (this.channel) {
+          this.channelIsClosing = true;
           this.channel.close().then(
             () => {
               debug('timeout::channel closed');
@@ -118,8 +123,9 @@ export class RabbitmqProducer {
             },
             () => { },
           );
-        } else {
+        }
           if (this.connection) {
+            this.connectionIsClosing = true;
             this.connection.close().then(
               () => {
                 debug('timeout::connection closed');
@@ -131,7 +137,7 @@ export class RabbitmqProducer {
           } else {
             resolve();
           }
-        }
+
       }, ms);
     });
 
