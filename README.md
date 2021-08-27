@@ -12,25 +12,35 @@ When the `loopback-rabbitmq` package is installed, bind it to your application w
 
 ```typescript
 import {RestApplication} from '@loopback/rest';
-import {ConsumersBooter, MessageHandlerErrorBehavior, QueueComponent, RabbitmqBindings, RabbitmqComponent, RabbitmqComponentConfig} from 'loopback-rabbitmq';
+import {
+  ConsumersBooter,
+  MessageHandlerErrorBehavior,
+  QueueComponent,
+  RabbitmqBindings,
+  RabbitmqComponent,
+  RabbitmqComponentConfig,
+} from 'loopback-rabbitmq';
 
 const app = new RestApplication();
 app.configure<RabbitmqComponentConfig>(RabbitmqBindings.COMPONENT).to({
   options: {
     protocol: process.env.RABBITMQ_PROTOCOL ?? 'amqp',
     hostname: process.env.RABBITMQ_HOST ?? 'localhost',
-    port: process.env.RABBITMQ_PORT === undefined ? 5672 : +process.env.RABBITMQ_PORT,
+    port:
+      process.env.RABBITMQ_PORT === undefined
+        ? 5672
+        : +process.env.RABBITMQ_PORT,
     username: process.env.RABBITMQ_USER ?? 'rabbitmq',
     password: process.env.RABBITMQ_PASS ?? 'rabbitmq',
     vhost: process.env.RABBITMQ_VHOST ?? '/',
   },
   // configurations below are optional, (Default values)
-  producer:{
-    idleTimeoutMillis: 10000
+  producer: {
+    idleTimeoutMillis: 10000,
   },
   consumer: {
     retries: 0, // number of retries, 0 is forever
-    interval: 1500,// retry interval in ms
+    interval: 1500, // retry interval in ms
   },
   defaultConsumerErrorBehavior: MessageHandlerErrorBehavior.ACK,
   prefetchCount: 10,
@@ -67,7 +77,6 @@ app.bootOptions = {
     nested: true,
   },
 };
-
 ```
 
 ### Bindings
@@ -120,7 +129,7 @@ export class RabbitController {
 }
 ```
 
-Create a dir in src/consumers with
+Create a dir in src/consumers with webhooks-consumer.consumer.ts
 
 ```ts
 import {ConsumeMessage, rabbitConsume} from 'loopback-rabbitmq';
@@ -132,8 +141,7 @@ interface Message {
 }
 
 export class WebhooksConsumer {
-  constructor() // @repository(WebhookRepository)
-  // public WebhookRepository: WebhookRepository,
+  constructor() // public WebhookRepository: WebhookRepository, // @repository(WebhookRepository)
   // @service(WebhookProvider) public webhookService: WebhookService,
   {}
 
