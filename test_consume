@@ -1,0 +1,35 @@
+#!/usr/bin/env node
+const amqp = require('amqplib');
+
+const myArgs = process.argv.slice(2);
+
+setTimeout(function () {
+  //Espera o Rabbitmq subir
+  amqp
+    .connect({
+      protocol: 'amqp',
+      hostname: 'localhost',
+      port: 5672,
+      username: 'rabbitmq',
+      password: 'rabbitmq',
+      vhost: '/',
+    })
+    .then(function (conn) {
+      return conn.createChannel();
+    })
+    .then(function (ch) {
+      // Quantas mensagens o consumidor irá pegar por vez.  Sem isso, ele irá pegar todas
+      ch.prefetch(1);
+
+      //Cria um listening que vai disparar o callbacl sempre que houver uma nova mensagem na fila
+      ch.consume(myArgs[0], function (msg) {
+        setTimeout(function () {
+          console.log('Dado para ser processado: %s', msg.content.toString());
+          // Retorna o ACK para o servidor. Está tudo ok, tira da fila!
+          ch.ack(msg);
+
+          //ch.nack(msg) Retorna um No ACK para o servidor.
+        }, 2000); // Timeout pra simular alguma coisa pesada sendo processada
+      });
+    });
+}, 10000);
