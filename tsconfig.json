@@ -3,10 +3,7 @@
   "extends": "@loopback/build/config/tsconfig.common.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
-    "declaration": true
+    "rootDir": "src"
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
